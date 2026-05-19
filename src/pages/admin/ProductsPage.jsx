@@ -34,52 +34,58 @@ export default function ProductsPage() {
   };
 
   return (
-    <div>
-      <div className="admin-page-header">
-        <h1>Products</h1>
-        <Link to="/admin/products/new" className="btn btn-primary">+ ADD NEW PRODUCT</Link>
+    <div className="flex flex-col gap-10">
+      <div className="flex justify-between items-end border-b-4 border-primary pb-4">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Products</h1>
+        <Link to="/admin/products/new" className="btn btn-primary py-3 px-6 text-sm font-black tracking-widest uppercase border-2 border-primary hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:-translate-y-1">
+          + ADD NEW PRODUCT
+        </Link>
       </div>
 
       {loading ? (
-        <div className="loading-screen"><div className="spinner spinner-lg"></div></div>
+        <div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"></div></div>
       ) : (
-        <>
-          <div className="table-container">
-            <table className="data-table">
+        <div className="flex flex-col gap-6">
+          <div className="overflow-x-auto border-4 border-primary bg-surface-container-lowest shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <table className="w-full text-left border-collapse min-w-[800px]">
               <thead>
-                <tr>
-                  <th>IMAGE</th>
-                  <th>NAME</th>
-                  <th>GENDER</th>
-                  <th>CATEGORY</th>
-                  <th>CREATED</th>
-                  <th>ACTIONS</th>
+                <tr className="bg-primary text-on-primary font-black text-sm tracking-widest uppercase">
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">IMAGE</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">NAME</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">GENDER</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">CATEGORY</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">CREATED</th>
+                  <th className="p-4 border-b-4 border-primary/20">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {products.length === 0 ? (
-                  <tr><td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: '#999' }}>No products found</td></tr>
+                  <tr>
+                    <td colSpan="6" className="p-8 text-center font-bold text-lg tracking-widest uppercase text-text-muted border-dashed border-2 border-border m-4">
+                      No products found
+                    </td>
+                  </tr>
                 ) : (
-                  products.map((product) => (
-                    <tr key={product.id}>
-                      <td>
-                        <div style={{ width: 48, height: 48, background: '#f0f0f0', overflow: 'hidden' }}>
+                  products.map((product, index) => (
+                    <tr key={product.id} className={`border-b-2 border-border ${index % 2 === 0 ? 'bg-surface' : 'bg-surface-container-lowest'} hover:bg-primary/5 transition-colors`}>
+                      <td className="p-4 border-r-2 border-border">
+                        <div className="w-12 h-12 border-2 border-border bg-surface flex items-center justify-center overflow-hidden">
                           {product.url ? (
-                            <img src={product.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img src={product.url} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#999' }}>N/A</div>
+                            <span className="text-[9px] font-black tracking-widest uppercase text-text-muted">N/A</span>
                           )}
                         </div>
                       </td>
-                      <td className="font-bold">{product.name}</td>
-                      <td>{product.gender}</td>
-                      <td>{product.category?.name}</td>
-                      <td>{new Date(product.createdAt).toLocaleDateString('id-ID')}</td>
-                      <td>
-                        <div className="flex gap-2">
-                          <Link to={`/admin/products/${product.id}/edit`} className="btn btn-sm btn-secondary">EDIT</Link>
-                          <Link to={`/admin/products/${product.id}/variants`} className="btn btn-sm btn-outline">VARIANTS</Link>
-                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(product.id)}>DELETE</button>
+                      <td className="p-4 border-r-2 border-border font-black text-sm tracking-widest uppercase">{product.name}</td>
+                      <td className="p-4 border-r-2 border-border font-bold text-sm tracking-wider uppercase">{product.gender}</td>
+                      <td className="p-4 border-r-2 border-border font-bold text-sm tracking-wider uppercase">{product.category?.name}</td>
+                      <td className="p-4 border-r-2 border-border font-bold text-sm tracking-wider uppercase">{new Date(product.createdAt).toLocaleDateString('id-ID')}</td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-2">
+                          <Link to={`/admin/products/${product.id}/edit`} className="inline-block px-3 py-1 border-2 border-primary bg-primary text-on-primary font-black text-xs tracking-widest uppercase hover:bg-on-primary hover:text-primary transition-colors">EDIT</Link>
+                          <Link to={`/admin/products/${product.id}/variants`} className="inline-block px-3 py-1 border-2 border-primary bg-surface font-black text-xs tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors">VARIANTS</Link>
+                          <button className="inline-block px-3 py-1 border-2 border-error bg-error text-on-primary font-black text-xs tracking-widest uppercase hover:bg-on-primary hover:text-error transition-colors" onClick={() => handleDelete(product.id)}>DELETE</button>
                         </div>
                       </td>
                     </tr>
@@ -90,15 +96,33 @@ export default function ProductsPage() {
           </div>
 
           {paging.total_page > 1 && (
-            <div className="pagination">
-              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>←</button>
+            <div className="flex justify-center gap-2 mt-4">
+              <button 
+                disabled={page <= 1} 
+                onClick={() => setPage(page - 1)}
+                className="w-10 h-10 flex items-center justify-center border-2 border-primary font-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary hover:text-on-primary transition-colors"
+              >
+                ←
+              </button>
               {Array.from({ length: paging.total_page }, (_, i) => i + 1).map((p) => (
-                <button key={p} className={p === page ? 'active' : ''} onClick={() => setPage(p)}>{p}</button>
+                <button 
+                  key={p} 
+                  className={`w-10 h-10 flex items-center justify-center border-2 border-primary font-black transition-colors ${p === page ? 'bg-primary text-on-primary' : 'hover:bg-primary/10'}`} 
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
               ))}
-              <button disabled={page >= paging.total_page} onClick={() => setPage(page + 1)}>→</button>
+              <button 
+                disabled={page >= paging.total_page} 
+                onClick={() => setPage(page + 1)}
+                className="w-10 h-10 flex items-center justify-center border-2 border-primary font-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary hover:text-on-primary transition-colors"
+              >
+                →
+              </button>
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

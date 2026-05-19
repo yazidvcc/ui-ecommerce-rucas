@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { productApi, categoryApi, colorApi, sizeApi, adminProductApi } from '../../lib/api';
-import './ProductFormPage.css';
+import ReactQuill from 'react-quill-new';
+import 'react-quill-new/dist/quill.snow.css';
 
 export default function ProductFormPage() {
   const { id } = useParams();
@@ -145,94 +146,100 @@ export default function ProductFormPage() {
   };
 
   if (loading) {
-    return <div className="loading-screen"><div className="spinner spinner-lg"></div></div>;
+    return <div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"></div></div>;
   }
 
   return (
-    <div>
-      <div className="admin-page-header">
-        <h1>{isEditing ? 'EDIT PRODUCT' : (createdProductId ? 'UPLOAD PRODUCT IMAGES' : 'ADD NEW PRODUCT')}</h1>
+    <div className="flex flex-col gap-10">
+      <div className="flex justify-between items-end border-b-4 border-primary pb-4">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">{isEditing ? 'EDIT PRODUCT' : (createdProductId ? 'UPLOAD PRODUCT IMAGES' : 'ADD NEW PRODUCT')}</h1>
       </div>
 
-      {error && <div className="auth-error mb-6">{error}</div>}
+      {error && <div className="p-4 border-2 border-error bg-error/10 text-error font-bold text-sm tracking-wider uppercase mb-6">{error}</div>}
 
       {!createdProductId ? (
-      <form onSubmit={handleSubmit} className="product-form">
-        <div className="form-card">
-          <h3 className="text-label-bold mb-4">BASIC INFORMATION</h3>
-          <div className="form-grid">
-            <div className="input-group">
-              <label>PRODUCT NAME</label>
-              <input className="input-field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+      <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-4xl">
+        <div className="border-4 border-primary bg-surface-container-lowest p-8 flex flex-col gap-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h3 className="text-2xl font-black uppercase tracking-tighter border-b-2 border-border pb-2">BASIC INFORMATION</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="font-bold text-sm tracking-widest uppercase">PRODUCT NAME</label>
+              <input className="w-full p-4 border-2 border-primary bg-surface font-bold text-sm text-on-surface focus:outline-none focus:border-on-surface transition-colors" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             </div>
-            <div className="input-group">
-              <label>CATEGORY</label>
-              <select className="input-field" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} required>
+            <div className="flex flex-col gap-2">
+              <label className="font-bold text-sm tracking-widest uppercase">CATEGORY</label>
+              <select className="w-full p-4 border-2 border-primary bg-surface font-bold text-sm text-on-surface focus:outline-none focus:border-on-surface transition-colors cursor-pointer" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} required>
                 <option value="">Select category</option>
                 {categories.map((cat) => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
               </select>
             </div>
-            <div className="input-group">
-              <label>GENDER</label>
-              <select className="input-field" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} required>
+            <div className="flex flex-col gap-2">
+              <label className="font-bold text-sm tracking-widest uppercase">GENDER</label>
+              <select className="w-full p-4 border-2 border-primary bg-surface font-bold text-sm text-on-surface focus:outline-none focus:border-on-surface transition-colors cursor-pointer" value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })} required>
                 <option value="MALE">Male</option>
                 <option value="FEMALE">Female</option>
                 <option value="UNISEX">Unisex</option>
               </select>
             </div>
           </div>
-          <div className="input-group mt-4">
-            <label>DESCRIPTION</label>
-            <textarea className="input-field" rows="4" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+          <div className="flex flex-col gap-2">
+            <label className="font-bold text-sm tracking-widest uppercase">DESCRIPTION</label>
+            <div className="border-2 border-primary bg-surface font-sans [&_.ql-toolbar]:border-0 [&_.ql-toolbar]:border-b-2 [&_.ql-toolbar]:border-primary [&_.ql-container]:border-0 [&_.ql-container]:text-sm [&_.ql-container]:font-bold [&_.ql-container]:text-on-surface [&_.ql-editor]:min-h-[120px]">
+              <ReactQuill 
+                theme="snow" 
+                value={form.description} 
+                onChange={(val) => setForm({ ...form, description: val })}
+              />
+            </div>
           </div>
         </div>
 
         {/* Variants - only for new products */}
         {!isEditing && (
-          <div className="form-card">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-label-bold">PRODUCT VARIANTS</h3>
-              <button type="button" className="btn btn-sm btn-secondary" onClick={addVariant}>+ ADD VARIANT</button>
+          <div className="border-4 border-primary bg-surface-container-lowest p-8 flex flex-col gap-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-4 border-b-2 border-border pb-2">
+              <h3 className="text-2xl font-black uppercase tracking-tighter">PRODUCT VARIANTS</h3>
+              <button type="button" className="btn btn-outline border-2 border-primary px-4 py-2 font-black text-xs tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors" onClick={addVariant}>+ ADD VARIANT</button>
             </div>
             {variants.map((variant, i) => (
-              <div key={i} className="variant-row">
-                <select className="input-field" value={variant.color_id} onChange={(e) => updateVariant(i, 'color_id', e.target.value)} required>
+              <div key={i} className="flex flex-wrap gap-4 items-center bg-surface p-4 border-2 border-border">
+                <select className="flex-1 min-w-[120px] p-3 border-2 border-primary bg-surface-container-lowest font-bold text-xs focus:outline-none cursor-pointer" value={variant.color_id} onChange={(e) => updateVariant(i, 'color_id', e.target.value)} required>
                   <option value="">Color</option>
                   {colors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <select className="input-field" value={variant.size_id} onChange={(e) => updateVariant(i, 'size_id', e.target.value)} required>
+                <select className="flex-1 min-w-[100px] p-3 border-2 border-primary bg-surface-container-lowest font-bold text-xs focus:outline-none cursor-pointer" value={variant.size_id} onChange={(e) => updateVariant(i, 'size_id', e.target.value)} required>
                   <option value="">Size</option>
                   {sizes.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
                 </select>
-                <input className="input-field" type="number" placeholder="Price" value={variant.price} onChange={(e) => updateVariant(i, 'price', e.target.value)} required />
-                <input className="input-field" type="number" placeholder="Stock" value={variant.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} required />
-                <input className="input-field" type="number" placeholder="Weight (g)" value={variant.weight} onChange={(e) => updateVariant(i, 'weight', e.target.value)} required />
+                <input className="w-24 p-3 border-2 border-primary bg-surface-container-lowest font-bold text-xs focus:outline-none" type="number" placeholder="Price" value={variant.price} onChange={(e) => updateVariant(i, 'price', e.target.value)} required />
+                <input className="w-20 p-3 border-2 border-primary bg-surface-container-lowest font-bold text-xs focus:outline-none" type="number" placeholder="Stock" value={variant.stock} onChange={(e) => updateVariant(i, 'stock', e.target.value)} required />
+                <input className="w-24 p-3 border-2 border-primary bg-surface-container-lowest font-bold text-xs focus:outline-none" type="number" placeholder="Weight (g)" value={variant.weight} onChange={(e) => updateVariant(i, 'weight', e.target.value)} required />
                 {variants.length > 1 && (
-                  <button type="button" className="btn btn-sm btn-danger" onClick={() => removeVariant(i)}>×</button>
+                  <button type="button" className="w-10 h-10 flex items-center justify-center border-2 border-error bg-error text-on-primary font-black text-lg hover:bg-on-primary hover:text-error transition-colors" onClick={() => removeVariant(i)}>×</button>
                 )}
               </div>
             ))}
           </div>
         )}
 
-        <div className="flex gap-4 mt-6">
-          <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
-            {saving ? <span className="spinner"></span> : (isEditing ? 'UPDATE PRODUCT' : 'CONTINUE TO IMAGES')}
+        <div className="flex flex-wrap gap-4 mt-2">
+          <button type="submit" className="btn btn-primary py-4 px-8 text-lg font-black tracking-widest uppercase border-2 border-primary hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 disabled:cursor-not-allowed" disabled={saving}>
+            {saving ? <span className="w-6 h-6 border-4 border-on-primary border-t-transparent rounded-full animate-spin inline-block"></span> : (isEditing ? 'UPDATE PRODUCT' : 'CONTINUE TO IMAGES')}
           </button>
-          <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/admin/products')}>CANCEL</button>
+          <button type="button" className="btn btn-outline py-4 px-8 text-lg font-black tracking-widest uppercase border-2 border-primary hover:bg-primary hover:text-on-primary transition-colors" onClick={() => navigate('/admin/products')}>CANCEL</button>
         </div>
       </form>
       ) : (
-      <form onSubmit={handleImageSubmit} className="product-form">
-        <div className="form-card">
-          <h3 className="text-label-bold mb-4">PRODUCT IMAGES</h3>
+      <form onSubmit={handleImageSubmit} className="flex flex-col gap-8 max-w-4xl">
+        <div className="border-4 border-primary bg-surface-container-lowest p-8 flex flex-col gap-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h3 className="text-2xl font-black uppercase tracking-tighter border-b-2 border-border pb-2">PRODUCT IMAGES</h3>
           
-          <div className="form-grid">
-            <div className="input-group">
-              <label>MAIN IMAGE</label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-2">
+              <label className="font-bold text-sm tracking-widest uppercase">MAIN IMAGE</label>
               <input
                 type="file"
-                className="input-field bg-white"
+                className="w-full p-3 border-2 border-primary bg-surface font-bold text-xs text-on-surface cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-primary file:text-on-primary file:font-black file:uppercase file:cursor-pointer hover:file:opacity-90"
                 accept="image/*"
                 onChange={(e) => setFiles({ ...files, main: e.target.files })}
                 required
@@ -240,11 +247,11 @@ export default function ProductFormPage() {
             </div>
 
             {selectedColors.map(color => (
-              <div key={color} className="input-group">
-                <label>{color.toUpperCase()} IMAGE</label>
+              <div key={color} className="flex flex-col gap-2">
+                <label className="font-bold text-sm tracking-widest uppercase">{color.toUpperCase()} IMAGE</label>
                 <input
                   type="file"
-                  className="input-field bg-white"
+                  className="w-full p-3 border-2 border-primary bg-surface font-bold text-xs text-on-surface cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-primary file:text-on-primary file:font-black file:uppercase file:cursor-pointer hover:file:opacity-90"
                   accept="image/*"
                   onChange={(e) => setFiles({ ...files, [color]: e.target.files })}
                   required
@@ -253,24 +260,24 @@ export default function ProductFormPage() {
             ))}
           </div>
 
-          <div className="input-group mt-4">
-            <label>ADDITIONAL IMAGES (OPTIONAL)</label>
+          <div className="flex flex-col gap-2 mt-2">
+            <label className="font-bold text-sm tracking-widest uppercase">ADDITIONAL IMAGES (OPTIONAL)</label>
             <input
               type="file"
-              className="input-field bg-white"
+              className="w-full p-3 border-2 border-primary bg-surface font-bold text-xs text-on-surface cursor-pointer file:mr-4 file:py-2 file:px-4 file:border-0 file:bg-primary file:text-on-primary file:font-black file:uppercase file:cursor-pointer hover:file:opacity-90"
               multiple
               accept="image/*"
               onChange={(e) => setFiles({ ...files, additional: e.target.files })}
             />
-            <p className="text-label-sm text-muted mt-2">You can select multiple files</p>
+            <p className="font-bold text-xs tracking-wider uppercase text-text-muted mt-1">You can select multiple files</p>
           </div>
         </div>
 
-        <div className="flex gap-4 mt-6">
-          <button type="submit" className="btn btn-primary btn-lg" disabled={saving}>
-            {saving ? <span className="spinner"></span> : 'UPLOAD IMAGES'}
+        <div className="flex flex-wrap gap-4 mt-2">
+          <button type="submit" className="btn btn-primary py-4 px-8 text-lg font-black tracking-widest uppercase border-2 border-primary hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 disabled:cursor-not-allowed" disabled={saving}>
+            {saving ? <span className="w-6 h-6 border-4 border-on-primary border-t-transparent rounded-full animate-spin inline-block"></span> : 'UPLOAD IMAGES'}
           </button>
-          <button type="button" className="btn btn-secondary btn-lg" onClick={() => navigate('/admin/products')}>SKIP</button>
+          <button type="button" className="btn btn-outline py-4 px-8 text-lg font-black tracking-widest uppercase border-2 border-primary hover:bg-primary hover:text-on-primary transition-colors" onClick={() => navigate('/admin/products')}>SKIP</button>
         </div>
       </form>
       )}

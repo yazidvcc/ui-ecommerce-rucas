@@ -9,6 +9,17 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    order_id: '',
+    user_email: '',
+    shipping_name: '',
+    status: '',
+    payment_status: '',
+    tracking_number: '',
+    date_start: '',
+    date_end: ''
+  });
 
   const handleViewDetails = async (orderId) => {
     setLoadingDetails(true);
@@ -23,10 +34,20 @@ export default function OrdersPage() {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (currentPage = page, currentFilters = filters) => {
     setLoading(true);
     try {
-      const result = await orderApi.search({ page, size: 15 });
+      const searchParams = { page: currentPage, size: 15 };
+      if (currentFilters.order_id) searchParams.order_id = currentFilters.order_id;
+      if (currentFilters.user_email) searchParams.user_email = currentFilters.user_email;
+      if (currentFilters.shipping_name) searchParams.shipping_name = currentFilters.shipping_name;
+      if (currentFilters.status) searchParams.status = currentFilters.status;
+      if (currentFilters.payment_status) searchParams.payment_status = currentFilters.payment_status;
+      if (currentFilters.tracking_number) searchParams.tracking_number = currentFilters.tracking_number;
+      if (currentFilters.date_start) searchParams.date_start = currentFilters.date_start;
+      if (currentFilters.date_end) searchParams.date_end = currentFilters.date_end;
+
+      const result = await orderApi.search(searchParams);
       setOrders(result.data || []);
       setPaging(result.paging || { page: 1, total_page: 1 });
     } catch (err) {
@@ -36,7 +57,28 @@ export default function OrdersPage() {
     }
   };
 
-  useEffect(() => { fetchOrders(); }, [page]);
+  useEffect(() => { fetchOrders(page, filters); }, [page]);
+
+  const handleApplyFilters = () => {
+    setPage(1);
+    fetchOrders(1, filters);
+  };
+
+  const handleResetFilters = () => {
+    const emptyFilters = {
+      order_id: '',
+      user_email: '',
+      shipping_name: '',
+      status: '',
+      payment_status: '',
+      tracking_number: '',
+      date_start: '',
+      date_end: ''
+    };
+    setFilters(emptyFilters);
+    setPage(1);
+    fetchOrders(1, emptyFilters);
+  };
 
   const handleDelete = async (orderId) => {
     if (!window.confirm('Delete this order? (Only FAILED orders can be deleted)')) return;
@@ -50,71 +92,178 @@ export default function OrdersPage() {
 
   const getStatusBadge = (status) => {
     const map = {
-      SUCCESS: 'badge-success', PENDING: 'badge-warning', FAILED: 'badge-error',
-      DELIVERED: 'badge-success', SHIPPED: 'badge-neutral', CANCELLED: 'badge-error',
+      SUCCESS: 'bg-success text-on-primary',
+      PENDING: 'bg-warning text-primary',
+      FAILED: 'bg-error text-on-primary',
+      DELIVERED: 'bg-success text-on-primary',
+      SHIPPED: 'bg-surface-container-highest text-on-surface',
+      CANCELLED: 'bg-error text-on-primary',
     };
-    return map[status] || 'badge-neutral';
+    return map[status] || 'bg-border text-on-surface';
   };
 
   return (
-    <div>
-      <div className="admin-page-header">
-        <h1>Orders</h1>
+    <div className="flex flex-col gap-10">
+      <div className="flex justify-between items-end border-b-4 border-primary pb-4">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Orders</h1>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          {showFilters ? 'HIDE FILTERS' : 'SHOW FILTERS'}
+        </button>
       </div>
 
+      {showFilters && (
+        <div className="border-4 border-primary bg-surface-container-lowest p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] flex flex-col gap-4">
+          <h2 className="text-lg font-black uppercase tracking-widest border-b-2 border-border pb-2">Filter Orders</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <input 
+              type="text" 
+              placeholder="Order ID" 
+              className="input-field" 
+              value={filters.order_id} 
+              onChange={e => setFilters({...filters, order_id: e.target.value})}
+            />
+            <input 
+              type="email" 
+              placeholder="User Email" 
+              className="input-field" 
+              value={filters.user_email} 
+              onChange={e => setFilters({...filters, user_email: e.target.value})}
+            />
+            <input 
+              type="text" 
+              placeholder="Courier Name (e.g. jne)" 
+              className="input-field" 
+              value={filters.shipping_name} 
+              onChange={e => setFilters({...filters, shipping_name: e.target.value})}
+            />
+            <select 
+              className="input-field" 
+              value={filters.status} 
+              onChange={e => setFilters({...filters, status: e.target.value})}
+            >
+              <option value="">All Statuses</option>
+              <option value="PENDING">PENDING</option>
+              <option value="SHIPPED">SHIPPED</option>
+              <option value="DELIVERED">DELIVERED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+            <select 
+              className="input-field" 
+              value={filters.payment_status} 
+              onChange={e => setFilters({...filters, payment_status: e.target.value})}
+            >
+              <option value="">All Payment Statuses</option>
+              <option value="PENDING">PENDING</option>
+              <option value="SUCCESS">SUCCESS</option>
+              <option value="FAILED">FAILED</option>
+            </select>
+            <input 
+              type="text" 
+              placeholder="Tracking Number" 
+              className="input-field" 
+              value={filters.tracking_number} 
+              onChange={e => setFilters({...filters, tracking_number: e.target.value})}
+            />
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold tracking-widest uppercase text-text-muted">Start Date</label>
+              <input 
+                type="date" 
+                className="input-field" 
+                value={filters.date_start} 
+                onChange={e => setFilters({...filters, date_start: e.target.value})}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-[10px] font-bold tracking-widest uppercase text-text-muted">End Date</label>
+              <input 
+                type="date" 
+                className="input-field" 
+                value={filters.date_end} 
+                onChange={e => setFilters({...filters, date_end: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-4 mt-2">
+            <button className="btn btn-outline" onClick={handleResetFilters}>
+              RESET
+            </button>
+            <button className="btn btn-primary" onClick={handleApplyFilters}>
+              APPLY FILTERS
+            </button>
+          </div>
+        </div>
+      )}
+
       {loading ? (
-        <div className="loading-screen"><div className="spinner spinner-lg"></div></div>
+        <div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"></div></div>
       ) : (
-        <>
-          <div className="table-container">
-            <table className="data-table">
+        <div className="flex flex-col gap-6">
+          <div className="overflow-x-auto border-4 border-primary bg-surface-container-lowest shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr>
-                  <th>ORDER ID</th>
-                  <th>CUSTOMER</th>
-                  <th>DATE</th>
-                  <th>ITEMS</th>
-                  <th>TOTAL</th>
-                  <th>PAYMENT</th>
-                  <th>STATUS</th>
-                  <th>SHIPPING</th>
-                  <th>ACTIONS</th>
+                <tr className="bg-primary text-on-primary font-black text-sm tracking-widest uppercase">
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">ORDER ID</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">CUSTOMER</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">DATE</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">ITEMS</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">TOTAL</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">PAYMENT</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">STATUS</th>
+                  <th className="p-4 border-b-4 border-r-4 border-primary/20">SHIPPING</th>
+                  <th className="p-4 border-b-4 border-primary/20">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.length === 0 ? (
-                  <tr><td colSpan="9" style={{ textAlign: 'center', padding: '32px', color: '#999' }}>No orders found</td></tr>
+                  <tr>
+                    <td colSpan="9" className="p-8 text-center font-bold text-lg tracking-widest uppercase text-text-muted border-dashed border-2 border-border m-4">
+                      No orders found
+                    </td>
+                  </tr>
                 ) : (
-                  orders.map((order) => (
-                    <tr key={order.id}>
-                      <td style={{ fontFamily: 'monospace', fontSize: '11px', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  orders.map((order, index) => (
+                    <tr key={order.id} className={`border-b-2 border-border ${index % 2 === 0 ? 'bg-surface' : 'bg-surface-container-lowest'} hover:bg-primary/5 transition-colors`}>
+                      <td className="p-4 border-r-2 border-border font-mono text-xs font-bold max-w-[160px] truncate" title={order.id}>
                         {order.id?.substring(0, 20)}...
                       </td>
-                      <td>
-                        <div className="font-bold">{order.user?.name}</div>
-                        <div className="text-label-sm text-muted">{order.user?.email}</div>
+                      <td className="p-4 border-r-2 border-border">
+                        <div className="font-bold text-sm tracking-wider uppercase">{order.user?.name}</div>
+                        <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted">{order.user?.email}</div>
                       </td>
-                      <td>{new Date(order.createdAt).toLocaleDateString('id-ID')}</td>
-                      <td>
+                      <td className="p-4 border-r-2 border-border font-bold text-sm tracking-wider uppercase">{new Date(order.createdAt).toLocaleDateString('id-ID')}</td>
+                      <td className="p-4 border-r-2 border-border">
                         {order.orderItems?.map((item, i) => (
-                          <div key={i} className="text-label-sm">
+                          <div key={i} className="font-bold text-[10px] tracking-widest uppercase whitespace-nowrap">
                             {item.productVariant?.product?.name} ×{item.quantity}
                           </div>
                         ))}
                       </td>
-                      <td className="font-bold">
+                      <td className="p-4 border-r-2 border-border font-black text-sm tracking-tighter">
                         Rp {((order.total_price || 0) + (order.shipping_cost || 0)).toLocaleString('id-ID')}
                       </td>
-                      <td><span className={`badge ${getStatusBadge(order.payment_status)}`}>{order.payment_status}</span></td>
-                      <td><span className={`badge ${getStatusBadge(order.status)}`}>{order.status}</span></td>
-                      <td className="text-label-sm">{order.shipping_service || '-'}</td>
-                      <td style={{ display: 'flex', gap: '8px' }}>
-                        <button className="btn btn-sm btn-secondary" onClick={() => handleViewDetails(order.id)} disabled={loadingDetails}>
-                          DETAILS
-                        </button>
-                        {order.payment_status === 'FAILED' && (
-                          <button className="btn btn-sm btn-danger" onClick={() => handleDelete(order.id)}>DELETE</button>
-                        )}
+                      <td className="p-4 border-r-2 border-border">
+                        <span className={`inline-block px-2 py-1 text-[10px] font-black tracking-widest uppercase ${getStatusBadge(order.payment_status)}`}>
+                          {order.payment_status}
+                        </span>
+                      </td>
+                      <td className="p-4 border-r-2 border-border">
+                        <span className={`inline-block px-2 py-1 text-[10px] font-black tracking-widest uppercase ${getStatusBadge(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="p-4 border-r-2 border-border font-bold text-[10px] tracking-widest uppercase">{order.shipping_name + "-" + order.shipping_service || '-'}</td>
+                      <td className="p-4">
+                        <div className="flex flex-wrap gap-2">
+                          <button className="inline-block px-3 py-1 border-2 border-primary bg-surface font-black text-xs tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-50" onClick={() => handleViewDetails(order.id)} disabled={loadingDetails}>
+                            DETAILS
+                          </button>
+                          {order.payment_status === 'FAILED' && (
+                            <button className="inline-block px-3 py-1 border-2 border-error bg-error text-on-primary font-black text-xs tracking-widest uppercase hover:bg-on-primary hover:text-error transition-colors" onClick={() => handleDelete(order.id)}>DELETE</button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -124,128 +273,151 @@ export default function OrdersPage() {
           </div>
 
           {paging.total_page > 1 && (
-            <div className="pagination">
-              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>←</button>
+            <div className="flex justify-center gap-2 mt-4">
+              <button 
+                disabled={page <= 1} 
+                onClick={() => setPage(page - 1)}
+                className="w-10 h-10 flex items-center justify-center border-2 border-primary font-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary hover:text-on-primary transition-colors"
+              >
+                ←
+              </button>
               {Array.from({ length: paging.total_page }, (_, i) => i + 1).map((p) => (
-                <button key={p} className={p === page ? 'active' : ''} onClick={() => setPage(p)}>{p}</button>
+                <button 
+                  key={p} 
+                  className={`w-10 h-10 flex items-center justify-center border-2 border-primary font-black transition-colors ${p === page ? 'bg-primary text-on-primary' : 'hover:bg-primary/10'}`} 
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
               ))}
-              <button disabled={page >= paging.total_page} onClick={() => setPage(page + 1)}>→</button>
+              <button 
+                disabled={page >= paging.total_page} 
+                onClick={() => setPage(page + 1)}
+                className="w-10 h-10 flex items-center justify-center border-2 border-primary font-black disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary hover:text-on-primary transition-colors"
+              >
+                →
+              </button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {showModal && selectedOrder && (
-        <div className="modal-backdrop" style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(4px)' }}>
-          <div className="modal-content" style={{ maxWidth: '720px', width: '90%', maxHeight: '90vh', overflowY: 'auto', borderRadius: '0', border: '2px solid #000', padding: '0', backgroundColor: '#fff' }}>
+        <div className="fixed inset-0 bg-primary/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container-lowest border-4 border-primary w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-[16px_16px_0px_0px_rgba(0,0,0,1)]">
             
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: '2px solid #000', backgroundColor: '#f8f8f8' }}>
+            <div className="sticky top-0 bg-surface-container-lowest z-10 flex justify-between items-center p-6 sm:p-8 border-b-4 border-primary">
               <div>
-                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase' }}>ORDER #{selectedOrder.id?.substring(0,8)}</h2>
-                <span style={{ fontSize: '12px', color: '#666', fontWeight: '600' }}>{new Date(selectedOrder.createdAt).toLocaleString('id-ID')}</span>
+                <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tighter">ORDER #{selectedOrder.id?.substring(0,8)}</h2>
+                <span className="font-bold text-xs tracking-widest uppercase text-text-muted">{new Date(selectedOrder.createdAt).toLocaleString('id-ID')}</span>
               </div>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', fontWeight: 'bold' }}>✕</button>
+              <button onClick={() => setShowModal(false)} className="w-10 h-10 flex items-center justify-center border-2 border-primary font-black text-xl hover:bg-primary hover:text-on-primary transition-colors">✕</button>
             </div>
 
-            <div style={{ padding: '32px' }}>
+            <div className="p-6 sm:p-8">
               
               {/* Status Row */}
-              <div style={{ display: 'flex', gap: '16px', marginBottom: '32px' }}>
-                <div style={{ flex: 1, padding: '16px', border: '1px solid #e0e0e0', backgroundColor: '#fafafa' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#666', letterSpacing: '1px', marginBottom: '8px' }}>ORDER STATUS</div>
-                  <span className={`badge ${getStatusBadge(selectedOrder.status)}`} style={{ fontSize: '14px', padding: '6px 12px' }}>{selectedOrder.status}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                <div className="border-4 border-primary p-6 bg-surface shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="font-bold text-xs tracking-widest uppercase text-text-muted mb-2">ORDER STATUS</div>
+                  <span className={`inline-block px-3 py-1 text-sm font-black tracking-widest uppercase border-2 border-primary ${getStatusBadge(selectedOrder.status)}`}>{selectedOrder.status}</span>
                 </div>
-                <div style={{ flex: 1, padding: '16px', border: '1px solid #e0e0e0', backgroundColor: '#fafafa' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#666', letterSpacing: '1px', marginBottom: '8px' }}>PAYMENT STATUS</div>
-                  <span className={`badge ${getStatusBadge(selectedOrder.payment_status)}`} style={{ fontSize: '14px', padding: '6px 12px' }}>{selectedOrder.payment_status}</span>
-                  <div style={{ marginTop: '8px', fontSize: '12px', fontWeight: 'bold' }}>VIA: {selectedOrder.payment_type || '-'}</div>
+                <div className="border-4 border-primary p-6 bg-surface shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="font-bold text-xs tracking-widest uppercase text-text-muted mb-2">PAYMENT STATUS</div>
+                  <span className={`inline-block px-3 py-1 text-sm font-black tracking-widest uppercase border-2 border-primary ${getStatusBadge(selectedOrder.payment_status)}`}>{selectedOrder.payment_status}</span>
+                  <div className="mt-4 font-bold text-xs tracking-widest uppercase text-text-muted">VIA: <span className="text-on-surface">{selectedOrder.payment_type || '-'}</span></div>
                 </div>
               </div>
 
               {/* Info Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '32px' }}>
-                <div>
-                  <h3 style={{ fontSize: '14px', fontWeight: '900', borderBottom: '2px solid #000', paddingBottom: '8px', marginBottom: '16px' }}>CUSTOMER INFO</h3>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', letterSpacing: '0.5px' }}>NAME</div>
-                    <div style={{ fontSize: '14px', fontWeight: '700' }}>{selectedOrder.user?.name}</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                <div className="flex flex-col gap-4 border-4 border-primary p-6 bg-surface-container-lowest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <h3 className="text-lg font-black uppercase tracking-tighter border-b-2 border-border pb-2">CUSTOMER INFO</h3>
+                  <div>
+                    <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted mb-1">NAME</div>
+                    <div className="font-black text-sm tracking-widest uppercase">{selectedOrder.user?.name}</div>
                   </div>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', letterSpacing: '0.5px' }}>EMAIL & PHONE</div>
-                    <div style={{ fontSize: '14px', fontWeight: '500' }}>{selectedOrder.user?.email} <br/> {selectedOrder.user?.phone}</div>
+                  <div>
+                    <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted mb-1">EMAIL & PHONE</div>
+                    <div className="font-bold text-sm tracking-wider uppercase leading-relaxed">{selectedOrder.user?.email} <br/> {selectedOrder.user?.phone}</div>
                   </div>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', letterSpacing: '0.5px' }}>SHIPPING ADDRESS</div>
-                    <div style={{ fontSize: '14px', fontWeight: '500', lineHeight: '1.5' }}>{selectedOrder.address}</div>
+                  <div>
+                    <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted mb-1">SHIPPING ADDRESS</div>
+                    <div className="font-bold text-sm tracking-wider uppercase leading-relaxed">{selectedOrder.address}</div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 style={{ fontSize: '14px', fontWeight: '900', borderBottom: '2px solid #000', paddingBottom: '8px', marginBottom: '16px' }}>SHIPPING DETAILS</h3>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', letterSpacing: '0.5px' }}>COURIER</div>
-                    <div style={{ fontSize: '14px', fontWeight: '700' }}>{selectedOrder.shipping_name} - {selectedOrder.shipping_service}</div>
+                <div className="flex flex-col gap-4 border-4 border-primary p-6 bg-surface-container-lowest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <h3 className="text-lg font-black uppercase tracking-tighter border-b-2 border-border pb-2">SHIPPING DETAILS</h3>
+                  <div>
+                    <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted mb-1">COURIER</div>
+                    <div className="font-black text-sm tracking-widest uppercase">{selectedOrder.shipping_name} - {selectedOrder.shipping_service}</div>
                   </div>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', letterSpacing: '0.5px' }}>SERVICE DESCRIPTION</div>
-                    <div style={{ fontSize: '14px', fontWeight: '500' }}>{selectedOrder.shipping_description || '-'} (ETD: {selectedOrder.etd || '-'})</div>
+                  <div>
+                    <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted mb-1">SERVICE DESCRIPTION</div>
+                    <div className="font-bold text-sm tracking-wider uppercase leading-relaxed">{selectedOrder.shipping_description || '-'} (ETD: {selectedOrder.etd || '-'})</div>
                   </div>
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', fontWeight: 'bold', letterSpacing: '0.5px' }}>TRACKING NUMBER</div>
-                    <div style={{ fontSize: '14px', fontWeight: '700', color: selectedOrder.tracking_number ? '#000' : '#999' }}>{selectedOrder.tracking_number || 'Not yet updated'}</div>
+                  <div>
+                    <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted mb-1">TRACKING NUMBER</div>
+                    <div className={`font-black text-sm tracking-widest uppercase ${selectedOrder.tracking_number ? 'text-on-surface' : 'text-text-muted'}`}>{selectedOrder.tracking_number || 'Not yet updated'}</div>
                   </div>
                 </div>
               </div>
 
               {/* Items Table */}
-              <h3 style={{ fontSize: '14px', fontWeight: '900', borderBottom: '2px solid #000', paddingBottom: '8px', marginBottom: '16px' }}>ORDER ITEMS</h3>
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '24px', border: '1px solid #e0e0e0' }}>
-                <thead style={{ backgroundColor: '#f8f8f8', borderBottom: '2px solid #000' }}>
-                  <tr>
-                    <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 'bold' }}>PRODUCT</th>
-                    <th style={{ padding: '12px 16px', textAlign: 'center', fontSize: '12px', fontWeight: 'bold' }}>QTY</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedOrder.orderItems?.map((item, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <td style={{ padding: '16px' }}>
-                        <div style={{ fontWeight: '700', fontSize: '14px', marginBottom: '4px' }}>{item.productVariant?.product?.name}</div>
-                        <div style={{ fontSize: '12px', color: '#666', fontWeight: '500' }}>
-                          Color: <span style={{ color: '#000' }}>{item.productVariant?.color?.name}</span> | 
-                          Size: <span style={{ color: '#000' }}>{item.productVariant?.size?.label}</span>
-                        </div>
-                      </td>
-                      <td style={{ padding: '16px', textAlign: 'center', fontWeight: '700', fontSize: '14px' }}>{item.quantity}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="border-4 border-primary bg-surface shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] mb-8">
+                <h3 className="text-lg font-black uppercase tracking-tighter border-b-4 border-primary p-4 bg-surface-container-lowest">ORDER ITEMS</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse min-w-[400px]">
+                    <thead>
+                      <tr className="bg-primary/5 font-black text-xs tracking-widest uppercase border-b-4 border-primary">
+                        <th className="p-4 border-r-4 border-primary">PRODUCT</th>
+                        <th className="p-4 text-center w-24">QTY</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedOrder.orderItems?.map((item, i) => (
+                        <tr key={i} className="border-b-2 border-border last:border-b-0 hover:bg-primary/5 transition-colors">
+                          <td className="p-4 border-r-4 border-border">
+                            <div className="font-black text-sm tracking-widest uppercase mb-1">{item.productVariant?.product?.name}</div>
+                            <div className="font-bold text-[10px] tracking-widest uppercase text-text-muted flex gap-2">
+                              <span>Color: <span className="text-on-surface">{item.productVariant?.color?.name}</span></span>
+                              <span>|</span>
+                              <span>Size: <span className="text-on-surface">{item.productVariant?.size?.label}</span></span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-center font-black text-lg">{item.quantity}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
               {/* Totals */}
-              <div style={{ backgroundColor: '#f8f8f8', padding: '24px', border: '1px solid #e0e0e0', marginLeft: 'auto', width: '100%', maxWidth: '300px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', fontSize: '14px' }}>
-                  <span style={{ color: '#666', fontWeight: 'bold' }}>Subtotal</span>
-                  <span style={{ fontWeight: '700' }}>Rp {(selectedOrder.total_price || 0).toLocaleString('id-ID')}</span>
+              <div className="border-4 border-primary bg-surface-container-lowest p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ml-auto max-w-sm">
+                <div className="flex justify-between items-center mb-4 font-bold text-sm tracking-widest uppercase">
+                  <span className="text-text-muted">Subtotal</span>
+                  <span>Rp {(selectedOrder.total_price || 0).toLocaleString('id-ID')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '14px' }}>
-                  <span style={{ color: '#666', fontWeight: 'bold' }}>Shipping</span>
-                  <span style={{ fontWeight: '700' }}>Rp {(selectedOrder.shipping_cost || 0).toLocaleString('id-ID')}</span>
+                <div className="flex justify-between items-center mb-6 font-bold text-sm tracking-widest uppercase">
+                  <span className="text-text-muted">Shipping</span>
+                  <span>Rp {(selectedOrder.shipping_cost || 0).toLocaleString('id-ID')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '2px solid #000', paddingTop: '16px', fontSize: '16px' }}>
-                  <span style={{ fontWeight: '900' }}>TOTAL</span>
-                  <span style={{ fontWeight: '900' }}>Rp {((selectedOrder.total_price || 0) + (selectedOrder.shipping_cost || 0)).toLocaleString('id-ID')}</span>
+                <div className="flex justify-between items-center pt-4 border-t-4 border-primary text-xl font-black tracking-tighter uppercase">
+                  <span>TOTAL</span>
+                  <span>Rp {((selectedOrder.total_price || 0) + (selectedOrder.shipping_cost || 0)).toLocaleString('id-ID')}</span>
                 </div>
               </div>
 
             </div>
             
             {/* Footer */}
-            <div style={{ padding: '24px 32px', borderTop: '1px solid #e0e0e0', backgroundColor: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
+            <div className="sticky bottom-0 bg-surface-container-lowest z-10 flex justify-end p-6 border-t-4 border-primary">
               <button 
                 onClick={() => setShowModal(false)}
-                style={{ padding: '12px 32px', backgroundColor: '#000', color: '#fff', border: 'none', fontWeight: 'bold', letterSpacing: '1px', cursor: 'pointer' }}
+                className="btn btn-primary py-3 px-8 text-sm font-black tracking-widest uppercase border-2 border-primary hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:-translate-y-1"
               >
                 CLOSE
               </button>

@@ -1,10 +1,11 @@
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'https://husked-doormat-frigidly.ngrok-free.dev';
 
 async function request(endpoint, options = {}) {
   const config = {
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true', 
       ...options.headers,
     },
     ...options,

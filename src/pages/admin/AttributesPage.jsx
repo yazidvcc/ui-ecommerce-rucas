@@ -78,17 +78,17 @@ export default function AttributesPage() {
   const getDisplayName = (item) => activeTab === 'Sizes' ? item.label : item.name;
 
   return (
-    <div>
-      <div className="admin-page-header">
-        <h1>Attributes</h1>
+    <div className="flex flex-col gap-10">
+      <div className="flex justify-between items-end border-b-4 border-primary pb-4">
+        <h1 className="text-4xl md:text-5xl font-black tracking-tighter uppercase">Attributes</h1>
       </div>
 
       {/* Tabs */}
-      <div className="tabs mb-8">
+      <div className="flex flex-wrap gap-2 mb-2">
         {TABS.map((tab) => (
           <button
             key={tab}
-            className={`tab ${activeTab === tab ? 'active' : ''}`}
+            className={`px-6 py-3 font-black text-sm tracking-widest uppercase border-4 border-primary transition-all duration-300 ${activeTab === tab ? 'bg-primary text-on-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-y-1' : 'bg-surface text-on-surface hover:bg-primary/10'}`}
             onClick={() => { setActiveTab(tab); setNewName(''); setEditingId(null); }}
           >
             {tab}
@@ -97,69 +97,72 @@ export default function AttributesPage() {
       </div>
 
       {/* Add form */}
-      <div className="flex gap-3 mb-6" style={{ maxWidth: 500 }}>
+      <div className="flex flex-wrap gap-4 items-stretch max-w-2xl bg-surface-container-lowest p-6 border-4 border-primary shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
         <input
-          className="input-field"
+          className="flex-1 min-w-[200px] p-4 border-2 border-primary bg-surface font-bold text-sm text-on-surface focus:outline-none focus:border-on-surface transition-colors"
           placeholder={`New ${activeTab.slice(0, -1).toLowerCase()} name...`}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />
-        <button className="btn btn-primary" onClick={handleAdd} disabled={saving}>
-          {saving ? <span className="spinner"></span> : 'ADD'}
+        <button className="btn btn-primary py-4 px-8 text-sm font-black tracking-widest uppercase border-2 border-primary hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all duration-300 hover:-translate-y-1 disabled:opacity-50 disabled:hover:shadow-none disabled:hover:translate-y-0 disabled:cursor-not-allowed" onClick={handleAdd} disabled={saving}>
+          {saving ? <span className="w-5 h-5 border-2 border-on-primary border-t-transparent rounded-full animate-spin inline-block"></span> : 'ADD'}
         </button>
       </div>
 
       {/* List */}
       {loading ? (
-        <div className="loading-screen"><div className="spinner spinner-lg"></div></div>
+        <div className="flex justify-center items-center h-64"><div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"></div></div>
       ) : (
-        <div className="table-container">
-          <table className="data-table">
+        <div className="overflow-x-auto border-4 border-primary bg-surface-container-lowest shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <table className="w-full text-left border-collapse min-w-[500px]">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>NAME</th>
-                <th>ACTIONS</th>
+              <tr className="bg-primary text-on-primary font-black text-sm tracking-widest uppercase">
+                <th className="p-4 border-b-4 border-r-4 border-primary/20 w-24">ID</th>
+                <th className="p-4 border-b-4 border-r-4 border-primary/20">NAME</th>
+                <th className="p-4 border-b-4 border-primary/20 w-48">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
               {items.length === 0 ? (
-                <tr><td colSpan="3" style={{ textAlign: 'center', padding: '32px', color: '#999' }}>No {activeTab.toLowerCase()} found</td></tr>
+                <tr>
+                  <td colSpan="3" className="p-8 text-center font-bold text-lg tracking-widest uppercase text-text-muted border-dashed border-2 border-border m-4">
+                    No {activeTab.toLowerCase()} found
+                  </td>
+                </tr>
               ) : (
-                items.map((item) => (
-                  <tr key={item.id}>
-                    <td style={{ fontFamily: 'monospace' }}>{item.id}</td>
-                    <td>
+                items.map((item, index) => (
+                  <tr key={item.id} className={`border-b-2 border-border ${index % 2 === 0 ? 'bg-surface' : 'bg-surface-container-lowest'} hover:bg-primary/5 transition-colors`}>
+                    <td className="p-4 border-r-2 border-border font-mono text-xs font-bold text-text-muted">{item.id}</td>
+                    <td className="p-4 border-r-2 border-border">
                       {editingId === item.id ? (
                         <input
-                          className="input-field"
-                          style={{ width: 200, padding: '6px 10px', minHeight: 'auto' }}
+                          className="w-full max-w-[300px] p-2 border-2 border-primary bg-surface font-bold text-sm text-on-surface focus:outline-none"
                           value={editName}
                           onChange={(e) => setEditName(e.target.value)}
                           onKeyDown={(e) => e.key === 'Enter' && handleUpdate(item.id)}
                           autoFocus
                         />
                       ) : (
-                        <span className="font-bold">{getDisplayName(item)}</span>
+                        <span className="font-black text-sm tracking-widest uppercase">{getDisplayName(item)}</span>
                       )}
                     </td>
-                    <td>
-                      <div className="flex gap-2">
+                    <td className="p-4">
+                      <div className="flex flex-wrap gap-2">
                         {editingId === item.id ? (
                           <>
-                            <button className="btn btn-sm btn-primary" onClick={() => handleUpdate(item.id)}>SAVE</button>
-                            <button className="btn btn-sm btn-secondary" onClick={() => setEditingId(null)}>CANCEL</button>
+                            <button className="inline-block px-3 py-1 border-2 border-primary bg-primary text-on-primary font-black text-xs tracking-widest uppercase hover:bg-on-primary hover:text-primary transition-colors" onClick={() => handleUpdate(item.id)}>SAVE</button>
+                            <button className="inline-block px-3 py-1 border-2 border-primary bg-surface font-black text-xs tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors" onClick={() => setEditingId(null)}>CANCEL</button>
                           </>
                         ) : (
                           <>
                             <button
-                              className="btn btn-sm btn-secondary"
+                              className="inline-block px-3 py-1 border-2 border-primary bg-surface font-black text-xs tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors"
                               onClick={() => { setEditingId(item.id); setEditName(getDisplayName(item)); }}
                             >
                               EDIT
                             </button>
-                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(item.id)}>DELETE</button>
+                            <button className="inline-block px-3 py-1 border-2 border-error bg-error text-on-primary font-black text-xs tracking-widest uppercase hover:bg-on-primary hover:text-error transition-colors" onClick={() => handleDelete(item.id)}>DELETE</button>
                           </>
                         )}
                       </div>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { productApi, categoryApi } from '../lib/api';
-import './CatalogPage.css';
 
 export default function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -59,78 +58,82 @@ export default function CatalogPage() {
   };
 
   return (
-    <div className="catalog-page">
-      <div className="container">
+    <div className="w-full bg-background min-h-screen pb-20">
+      <div className="container mx-auto px-6 pt-10">
         {/* Page header */}
-        <div className="catalog-header">
-          <h1 className="text-headline-lg">
+        <div className="border-b-4 border-primary pb-6 mb-10">
+          <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase">
             {currentGender ? `${currentGender}'S COLLECTION` : 'ALL PRODUCTS'}
           </h1>
-          {currentName && <p className="text-muted">Search results for: "{currentName}"</p>}
+          {currentName && <p className="text-lg font-bold text-text-muted mt-2 uppercase tracking-wide">Search results for: "{currentName}"</p>}
         </div>
 
-        <div className="catalog-layout">
+        <div className="flex flex-col lg:flex-row gap-12">
           {/* Filters sidebar */}
-          <aside className="catalog-filters">
-            <div className="filter-section">
-              <h3 className="filter-title">CATEGORY</h3>
+          <aside className="w-full lg:w-64 flex-shrink-0 flex flex-col gap-8">
+            <div className="flex flex-col gap-3 border-2 border-primary bg-surface-container-lowest p-6">
+              <h3 className="font-black text-xl uppercase tracking-widest border-b-2 border-primary pb-2 mb-2">CATEGORY</h3>
               <button
-                className={`filter-option ${!currentCategoryId ? 'active' : ''}`}
+                className={`text-left font-bold text-sm tracking-wider uppercase transition-colors hover:text-primary ${!currentCategoryId ? 'text-primary' : 'text-text-muted'}`}
                 onClick={() => updateFilter('category_id', '')}
               >
-                All Categories
+                All Categories {(!currentCategoryId) && '←'}
               </button>
               {categories.map((cat) => (
                 <button
                   key={cat.id}
-                  className={`filter-option ${currentCategoryId == cat.id ? 'active' : ''}`}
+                  className={`text-left font-bold text-sm tracking-wider uppercase transition-colors hover:text-primary ${currentCategoryId == cat.id ? 'text-primary' : 'text-text-muted'}`}
                   onClick={() => updateFilter('category_id', cat.id)}
                 >
-                  {cat.name}
+                  {cat.name} {(currentCategoryId == cat.id) && '←'}
                 </button>
               ))}
             </div>
 
-            <div className="filter-section">
-              <h3 className="filter-title">GENDER</h3>
+            <div className="flex flex-col gap-3 border-2 border-primary bg-surface-container-lowest p-6">
+              <h3 className="font-black text-xl uppercase tracking-widest border-b-2 border-primary pb-2 mb-2">GENDER</h3>
               {['', 'MALE', 'FEMALE', 'UNISEX'].map((g) => (
                 <button
                   key={g}
-                  className={`filter-option ${currentGender === g ? 'active' : ''}`}
+                  className={`text-left font-bold text-sm tracking-wider uppercase transition-colors hover:text-primary ${currentGender === g ? 'text-primary' : 'text-text-muted'}`}
                   onClick={() => updateFilter('gender', g)}
                 >
-                  {g || 'All'}
+                  {g || 'All'} {(currentGender === g) && '←'}
                 </button>
               ))}
             </div>
           </aside>
 
           {/* Products grid */}
-          <div className="catalog-content">
+          <div className="flex-1 min-w-0">
             {loading ? (
-              <div className="loading-screen"><div className="spinner spinner-lg"></div></div>
+              <div className="min-h-[40vh] flex items-center justify-center">
+                <div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin"></div>
+              </div>
             ) : products.length === 0 ? (
-              <div className="empty-state">
-                <p className="text-headline-md">NO PRODUCTS FOUND</p>
-                <p className="text-muted mt-2">Try adjusting your filters.</p>
+              <div className="border-2 border-dashed border-primary p-20 flex flex-col items-center justify-center text-center">
+                <p className="text-3xl font-black uppercase tracking-tighter">NO PRODUCTS FOUND</p>
+                <p className="text-text-muted font-bold mt-2 uppercase tracking-wide">Try adjusting your filters.</p>
               </div>
             ) : (
               <>
-                <div className="product-grid catalog-grid">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
                   {products.map((product) => (
-                    <Link key={product.id} to={`/products/${product.id}`} className="product-card card">
-                      <div className="card-image" style={{ backgroundColor: '#f0f0f0' }}>
+                    <Link key={product.id} to={`/products/${product.id}`} className="group flex flex-col border-2 border-transparent hover:border-primary transition-colors bg-surface-container-lowest">
+                      <div className="aspect-[4/5] w-full bg-surface-container relative overflow-hidden">
                         {product.url ? (
-                          <img src={product.url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={product.url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#999', fontSize: '14px', fontWeight: 600 }}>
+                          <div className="w-full h-full flex items-center justify-center text-text-muted font-bold text-sm tracking-widest">
                             NO IMAGE
                           </div>
                         )}
+                        <div className="absolute top-4 left-4">
+                          <span className="bg-primary text-on-primary text-xs font-bold px-2 py-1 uppercase tracking-widest">{product.gender}</span>
+                        </div>
                       </div>
-                      <div className="card-body">
-                        <p className="product-card-category text-label-sm text-muted">{product.gender}</p>
-                        <h3 className="product-card-name">{product.name}</h3>
+                      <div className="p-4 border-t-2 border-transparent group-hover:border-primary transition-colors flex flex-col gap-2">
+                        <h3 className="font-bold text-lg uppercase tracking-wide truncate">{product.name}</h3>
                       </div>
                     </Link>
                   ))}
@@ -138,14 +141,30 @@ export default function CatalogPage() {
 
                 {/* Pagination */}
                 {paging.total_page > 1 && (
-                  <div className="pagination">
-                    <button disabled={currentPage <= 1} onClick={() => goToPage(currentPage - 1)}>←</button>
+                  <div className="flex items-center justify-center gap-2 mt-16">
+                    <button 
+                      disabled={currentPage <= 1} 
+                      onClick={() => goToPage(currentPage - 1)}
+                      className="w-12 h-12 flex items-center justify-center border-2 border-border font-bold text-lg hover:border-primary hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit disabled:hover:border-border"
+                    >
+                      ←
+                    </button>
                     {Array.from({ length: paging.total_page }, (_, i) => i + 1).map((p) => (
-                      <button key={p} className={p === currentPage ? 'active' : ''} onClick={() => goToPage(p)}>
+                      <button 
+                        key={p} 
+                        className={`w-12 h-12 flex items-center justify-center border-2 font-bold text-lg transition-colors ${p === currentPage ? 'border-primary bg-primary text-on-primary' : 'border-border hover:border-primary hover:bg-primary hover:text-on-primary'}`} 
+                        onClick={() => goToPage(p)}
+                      >
                         {p}
                       </button>
                     ))}
-                    <button disabled={currentPage >= paging.total_page} onClick={() => goToPage(currentPage + 1)}>→</button>
+                    <button 
+                      disabled={currentPage >= paging.total_page} 
+                      onClick={() => goToPage(currentPage + 1)}
+                      className="w-12 h-12 flex items-center justify-center border-2 border-border font-bold text-lg hover:border-primary hover:bg-primary hover:text-on-primary transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-inherit disabled:hover:border-border"
+                    >
+                      →
+                    </button>
                   </div>
                 )}
               </>
