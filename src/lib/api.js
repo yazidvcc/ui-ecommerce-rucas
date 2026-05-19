@@ -17,7 +17,7 @@ async function request(endpoint, options = {}) {
     delete config.headers['Content-Type'];
   }
 
-  const response = await fetch(`${process.env.API_BACKEND}${endpoint}`, config);
+  const response = await fetch(`https://husked-doormat-frigidly.ngrok-free.dev${endpoint}`, config);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ errors: 'Network error' }));
