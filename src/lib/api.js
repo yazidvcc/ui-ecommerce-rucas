@@ -1,5 +1,3 @@
-const API_BASE = 'https://husked-doormat-frigidly.ngrok-free.dev';
-
 async function request(endpoint, options = {}) {
   const config = {
     credentials: 'include',
@@ -19,7 +17,7 @@ async function request(endpoint, options = {}) {
     delete config.headers['Content-Type'];
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, config);
+  const response = await fetch(`${process.env.API_BACKEND}${endpoint}`, config);
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ errors: 'Network error' }));
